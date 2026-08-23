@@ -5,7 +5,9 @@ import { SiteFooter } from "@/components/site-footer";
 import { HeroSection } from "@/components/hero-section";
 import { CategoryTabs } from "@/components/category-tabs";
 
-export default async function Home() {
+export const dynamic = "force-dynamic";
+
+export default async function Home(){
   // microCMSから最新記事を取得
   const data = await client.getList<Article>({
     endpoint: "articles",
