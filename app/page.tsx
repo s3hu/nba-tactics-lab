@@ -16,19 +16,22 @@ export default async function Home() {
   // HeroSectionに渡す特集記事のフォーマット調整
   const firstArticle = articles[0];
   const featuredArticle = firstArticle
-    ? {
+    ? ({
         id: firstArticle.id,
         title: firstArticle.title,
+        slug: firstArticle.slug,
         summary: firstArticle.body.replace(/<[^>]*>?/gm, "").slice(0, 120) + "...",
+        excerpt: firstArticle.body.replace(/<[^>]*>?/gm, "").slice(0, 120) + "...",
+        content: firstArticle.body,
         category: Array.isArray(firstArticle.contentType)
           ? firstArticle.contentType[0]
           : firstArticle.contentType || "TACTICS",
+        tags: [],
         thumbnailUrl:
           firstArticle.eyecatch?.url ||
           "https://images.unsplash.com/photo-1546519638-68e109498ffc?w=1200&auto=format&fit=crop&q=80",
         publishedAt: firstArticle.publishedAt,
-        slug: firstArticle.slug,
-      }
+      } as any)
     : null;
 
   return (
