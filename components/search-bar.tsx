@@ -1,66 +1,46 @@
 "use client";
 
-import { Suspense } from "react";
-import Link from "next/link";
-import { usePathname } from "next/navigation";
-import { Category } from "@/types";
-import { SearchBar } from "./search-bar";
+import { useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 
-interface SiteHeaderProps {
-  categories: Category[];
-}
+export function SearchBar() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const defaultQuery = searchParams.get("q") || "";
+  const [query, setQuery] = useState(defaultQuery);
 
-export function SiteHeader({ categories }: SiteHeaderProps) {
-  const pathname = usePathname();
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!query.trim()) return;
+    router.push(`/search?q=${encodeURIComponent(query.trim())}`);
+  };
 
   return (
-    <header className="border-b border-zinc-800 bg-[#0d0f12]/90 backdrop-blur sticky top-0 z-50">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between h-16 gap-4">
-          {/* サイトロゴ */}
-          <Link href="/" className="flex items-center gap-2 shrink-0">
-            <span className="font-extrabold text-lg sm:text-xl tracking-tight text-white font-mono">
-              NBA <span className="text-blue-500">TACTICS</span> LAB
-            </span>
-          </Link>
-
-          {/* 検索バー（PC・タブレット表示） */}
-          <div className="hidden md:block flex-1 max-w-xs lg:max-w-sm mx-4">
-            <Suspense fallback={null}>
-              <SearchBar />
-            </Suspense>
-          </div>
-
-          {/* カテゴリーナビゲーション */}
-          <nav className="flex items-center gap-1 sm:gap-2 overflow-x-auto py-2 scrollbar-none">
-            {categories.map((category) => {
-              const href = `/categories/${category.slug || category.id}`;
-              const isActive = pathname === href;
-
-              return (
-                <Link
-                  key={category.id}
-                  href={href}
-                  className={`px-3 py-1.5 rounded-lg text-xs font-medium tracking-wide transition-colors whitespace-nowrap ${
-                    isActive
-                      ? "bg-blue-500/10 text-blue-400 border border-blue-500/20"
-                      : "text-zinc-400 hover:text-zinc-100 hover:bg-zinc-800/50"
-                  }`}
-                >
-                  {category.label}
-                </Link>
-              );
-            })}
-          </nav>
-        </div>
-
-        {/* モバイル用検索バー（画面幅が狭い場合） */}
-        <div className="pb-3 md:hidden">
-          <Suspense fallback={null}>
-            <SearchBar />
-          </Suspense>
-        </div>
+    <form onSubmit={handleSubmit} className="relative w-full max-w-md">
+      <div className="relative">
+        <input
+          type="text"
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+          placeholder="選手名・戦術名で検索..."
+          className="w-full bg-zinc-900/80 border border-zinc-700/80 rounded-xl px-4 py-2 pl-10 text-xs text-zinc-100 placeholder-zinc-500 focus:outline-none focus:border-blue-500 transition-all font-sans"
+        />
+        <svg
+          className="absolute left-3.5 top-2.5 w-3.5 h-3.5 text-zinc-400"
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+        >
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth={2}
+            d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+          />
+        </svg>
       </div>
-    </header>
+    </form>
   );
 }
+
+export default SearchBar;
