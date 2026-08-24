@@ -16,21 +16,20 @@ export async function POST(req: NextRequest) {
     const contentId = body.id || body.contents?.new?.id;
     const publishValue = body.contents?.new?.publishValue || body;
     const title = publishValue.title || "";
-    // HTMLタグなどを除去して純粋なテキストにする
     const rawContent = publishValue.content || publishValue.body || "";
-    const cleanContent = rawContent.replace(/<[^>]*>?/gm, "").slice(0, 1000);
+    const cleanContent = rawContent.replace(/<[^>]*>?/gm, "").slice(0, 800);
 
     if (!contentId) {
       return NextResponse.json({ message: "No contentId" }, { status: 200 });
     }
 
     if (!apiKey) {
-      console.error("GEMINI_API_KEY is not defined in environment variables");
+      console.error("GEMINI_API_KEY is missing");
       return NextResponse.json({ error: "API Key missing" }, { status: 500 });
     }
 
-    // gemini-1.5-flash または gemini-2.0-flash
-    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+    // モデル名を gemini-1.5-flash-latest に変更
+    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash-latest" });
 
     const prompt = `あなたはNBA専門のSEOライターです。以下の記事のタイトルと本文を読み、SEOに強いタイトル案（32文字以内）と、記事の要約（100〜120文字程度）を作成してください。
 
