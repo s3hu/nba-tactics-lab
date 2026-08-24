@@ -30,7 +30,7 @@ async function getArticleData(slug: string): Promise<Article | null> {
   }
 }
 
-// 同じカテゴリーの関連記事を取得（現在の記事は除外して最大3件）
+// 同じカテゴリーの関連記事を取得（最大3件）
 async function getRelatedArticles(
   categoryName: string,
   currentArticleId: string
@@ -50,19 +50,45 @@ async function getRelatedArticles(
   }
 }
 
-// SEOメタデータ
+// SEO・OGPメタデータの動的生成
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params;
   const article = await getArticleData(slug);
 
   if (!article) return { title: "Not Found" };
 
+  const pageTitle = (article as any).seoTitle || article.title;
+  const description =
+    (article as any).summary ||
+    (article as any).description ||
+    `${article.title}の戦術解説記事です。`;
+  const ogImage =
+    article.eyecatch?.url ||
+    "https://images.unsplash.com/photo-1546519638-68e109498ffc?w=1200&auto=format&fit=crop&q=85";
+
   return {
-    title: (article as any).seoTitle || article.title,
-    description:
-      (article as any).summary ||
-      (article as any).description ||
-      `${article.title}の解説記事です。`,
+    title: `${pageTitle} | NBA TACTICS LAB`,
+    description: description,
+    openGraph: {
+      title: pageTitle,
+      description: description,
+      type: "article",
+      publishedTime: article.publishedAt,
+      images: [
+        {
+          url: ogImage,
+          width: 1200,
+          height: 630,
+          alt: article.title,
+        },
+      ],
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: pageTitle,
+      description: description,
+      images: [ogImage],
+    },
   };
 }
 
