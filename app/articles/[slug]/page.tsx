@@ -1,6 +1,7 @@
 import { Metadata } from "next";
 import { notFound } from "next/navigation";
 import Link from "next/link";
+import parse from "html-react-parser";
 import { client, Article } from "@/lib/microcms";
 import { CATEGORIES } from "@/lib/data/categories";
 import { SiteHeader } from "@/components/site-header";
@@ -51,24 +52,26 @@ async function getRelatedArticles(
   }
 }
 
-// HTML特殊文字（&lt;h2&gt; 等）を正規のタグに変換するデコーダー
-function decodeAndFormatHtml(content: string = ""): string {
+// HTML特殊文字とマークダウンの完全正規化
+function cleanAndFormatContent(content: string = ""): string {
   if (!content) return "";
-  
-  let formatted = content
+
+  // 1. エスケープされたHTML文字を本物のタグに戻す
+  let clean = content
     .replace(/&lt;/g, "<")
     .replace(/&gt;/g, ">")
     .replace(/&quot;/g, '"')
     .replace(/&#39;/g, "'")
     .replace(/&amp;/g, "&");
 
-  // もしマークダウン記法（## 見出し等）が混在していた場合の補正
-  formatted = formatted
-    .replace(/^### (.*$)/gim, '<h3 class="text-xl font-bold text-blue-300 mt-8 mb-3">$1</h3>')
-    .replace(/^## (.*$)/gim, '<h2 class="text-2xl font-extrabold text-white mt-12 mb-4 pb-2 border-b border-blue-500/30 flex items-center gap-2"><span class="w-1.5 h-6 bg-blue-500 rounded-full inline-block"></span>$1</h2>')
-    .replace(/^\* (.*$)/gim, '<li class="ml-4 list-disc text-zinc-300 my-1">$1</li>');
+  // 2. マークダウン記法が混ざっていた場合のHTML変換
+  clean = clean
+    .replace(/^### (.*$)/gim, '<h3 class="text-xl font-bold text-blue-300 mt-8 mb-4">$1</h3>')
+    .replace(/^## (.*$)/gim, '<h2 class="text-2xl font-extrabold text-white mt-12 mb-6 pb-3 border-b border-zinc-800 flex items-center gap-2"><span class="w-1.5 h-6 bg-blue-500 rounded-full inline-block"></span>$1</h2>')
+    .replace(/^\* (.*$)/gim, '<li class="ml-4 list-disc text-zinc-300 my-2">$1</li>')
+    .replace(/^- (.*$)/gim, '<li class="ml-4 list-disc text-zinc-300 my-2">$1</li>');
 
-  return formatted;
+  return clean;
 }
 
 // SEO・OGPメタデータの動的生成
@@ -134,7 +137,7 @@ export default async function ArticleDetailPage({ params }: Props) {
     (article as any).ai_summary ||
     (article as any).description;
 
-  const formattedBody = decodeAndFormatHtml(article.body || "");
+  const cleanedHtml = cleanAndFormatContent(article.body || "");
 
   return (
     <div className="min-h-screen bg-[#0d0f12] text-zinc-100 flex flex-col font-sans selection:bg-blue-600 selection:text-white">
@@ -196,7 +199,7 @@ export default async function ArticleDetailPage({ params }: Props) {
           )}
         </header>
 
-        {/* 記事本文 */}
+        {/* 記事本文（パース処理によりタグ文字列の残存を根絶） */}
         <article
           className="prose prose-invert max-w-none
             prose-headings:font-bold prose-headings:tracking-tight prose-headings:text-white
@@ -210,8 +213,9 @@ export default async function ArticleDetailPage({ params }: Props) {
             prose-li:leading-relaxed
             prose-blockquote:border-l-4 prose-blockquote:border-blue-500 prose-blockquote:bg-zinc-900/50 prose-blockquote:py-2 prose-blockquote:px-4 prose-blockquote:rounded-r-lg prose-blockquote:text-zinc-300 prose-blockquote:not-italic
             prose-img:rounded-2xl prose-img:border prose-img:border-zinc-800 prose-img:shadow-lg prose-img:my-8"
-          dangerouslySetInnerHTML={{ __html: formattedBody }}
-        />
+        >
+          {parse(cleanedHtml)}
+        </article>
 
         {/* 記事下 広告バナー */}
         <div className="my-12">
