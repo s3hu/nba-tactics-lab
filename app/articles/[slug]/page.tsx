@@ -5,6 +5,7 @@ import { client, Article } from "@/lib/microcms";
 import { CATEGORIES } from "@/lib/data/categories";
 import { SiteHeader } from "@/components/site-header";
 import { SiteFooter } from "@/components/site-footer";
+import { AdBanner } from "@/components/ad-banner";
 
 export const dynamic = "force-dynamic";
 
@@ -50,6 +51,26 @@ async function getRelatedArticles(
   }
 }
 
+// HTML特殊文字（&lt;h2&gt; 等）を正規のタグに変換するデコーダー
+function decodeAndFormatHtml(content: string = ""): string {
+  if (!content) return "";
+  
+  let formatted = content
+    .replace(/&lt;/g, "<")
+    .replace(/&gt;/g, ">")
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;/g, "'")
+    .replace(/&amp;/g, "&");
+
+  // もしマークダウン記法（## 見出し等）が混在していた場合の補正
+  formatted = formatted
+    .replace(/^### (.*$)/gim, '<h3 class="text-xl font-bold text-blue-300 mt-8 mb-3">$1</h3>')
+    .replace(/^## (.*$)/gim, '<h2 class="text-2xl font-extrabold text-white mt-12 mb-4 pb-2 border-b border-blue-500/30 flex items-center gap-2"><span class="w-1.5 h-6 bg-blue-500 rounded-full inline-block"></span>$1</h2>')
+    .replace(/^\* (.*$)/gim, '<li class="ml-4 list-disc text-zinc-300 my-1">$1</li>');
+
+  return formatted;
+}
+
 // SEO・OGPメタデータの動的生成
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params;
@@ -60,6 +81,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const pageTitle = (article as any).seoTitle || article.title;
   const description =
     (article as any).summary ||
+    (article as any).aiSummary ||
     (article as any).description ||
     `${article.title}の戦術解説記事です。`;
   const ogImage =
@@ -104,34 +126,34 @@ export default async function ArticleDetailPage({ params }: Props) {
     ? article.contentType[0]
     : article.contentType || "TACTICS";
 
-  // 関連記事を取得
   const relatedArticles = await getRelatedArticles(categoryLabel, article.id);
 
-  // AI要約の取得
   const aiSummary =
     (article as any).summary ||
     (article as any).aiSummary ||
     (article as any).ai_summary ||
     (article as any).description;
 
+  const formattedBody = decodeAndFormatHtml(article.body || "");
+
   return (
-    <div className="min-h-screen bg-[#0d0f12] text-white flex flex-col font-sans">
+    <div className="min-h-screen bg-[#0d0f12] text-zinc-100 flex flex-col font-sans selection:bg-blue-600 selection:text-white">
       <SiteHeader categories={CATEGORIES} />
 
       <main className="flex-1 max-w-4xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-10">
         {/* パンくずリスト */}
-        <div className="flex items-center gap-2 text-xs font-mono text-zinc-400 mb-6">
+        <nav className="flex items-center gap-2 text-xs font-mono text-zinc-400 mb-6">
           <Link href="/" className="hover:text-white transition-colors">
             HOME
           </Link>
           <span>/</span>
-          <span className="text-blue-400 uppercase">{categoryLabel}</span>
-        </div>
+          <span className="text-blue-400 uppercase font-semibold">{categoryLabel}</span>
+        </nav>
 
         {/* 記事ヘッダー */}
         <header className="mb-8">
           <div className="flex items-center gap-3 mb-4">
-            <span className="text-xs font-mono font-semibold px-2.5 py-1 rounded bg-blue-500/10 text-blue-400 border border-blue-500/20 uppercase">
+            <span className="text-xs font-mono font-semibold px-2.5 py-1 rounded bg-blue-500/10 text-blue-400 border border-blue-500/20 uppercase tracking-wide">
               {categoryLabel}
             </span>
             <time className="text-xs font-mono text-zinc-400">
@@ -143,12 +165,12 @@ export default async function ArticleDetailPage({ params }: Props) {
             </time>
           </div>
 
-          <h1 className="text-2xl sm:text-4xl font-extrabold tracking-tight text-white leading-tight mb-6">
+          <h1 className="text-2.5xl sm:text-4xl font-extrabold tracking-tight text-white leading-tight mb-6">
             {article.title}
           </h1>
 
           {/* アイキャッチ画像 */}
-          <div className="aspect-video w-full rounded-2xl overflow-hidden border border-zinc-800 bg-zinc-900 mb-8">
+          <div className="aspect-video w-full rounded-2xl overflow-hidden border border-zinc-800 bg-zinc-900 mb-8 shadow-xl shadow-black/40">
             <img
               src={
                 article.eyecatch?.url
@@ -162,45 +184,53 @@ export default async function ArticleDetailPage({ params }: Props) {
 
           {/* ✨ AI 要約ブロック */}
           {aiSummary && (
-            <div className="p-5 sm:p-6 rounded-2xl bg-blue-950/30 border border-blue-500/30 backdrop-blur-sm mb-8 shadow-lg shadow-blue-950/20">
-              <div className="flex items-center gap-2 mb-2.5 text-blue-400 font-bold text-xs font-mono tracking-wider uppercase">
+            <div className="p-5 sm:p-6 rounded-2xl bg-gradient-to-br from-blue-950/40 to-zinc-900/50 border border-blue-500/30 backdrop-blur-sm mb-8 shadow-lg shadow-blue-950/20">
+              <div className="flex items-center gap-2 mb-3 text-blue-400 font-bold text-xs font-mono tracking-wider uppercase">
                 <span className="text-base">✨</span>
-                <span>AI Summary / 3行要約</span>
+                <span>AI Tactical Summary / 3行要約</span>
               </div>
-              <p className="text-zinc-200 text-sm sm:text-base leading-relaxed whitespace-pre-wrap">
+              <div className="text-zinc-200 text-sm sm:text-base leading-relaxed whitespace-pre-wrap space-y-1.5 font-sans">
                 {aiSummary}
-              </p>
+              </div>
             </div>
           )}
         </header>
 
         {/* 記事本文 */}
         <article
-          className="prose prose-invert max-w-none 
-            prose-headings:font-bold prose-headings:text-white
-            prose-h2:text-2xl prose-h2:border-b prose-h2:border-zinc-800 prose-h2:pb-3 prose-h2:mt-10
-            prose-h3:text-xl prose-h3:mt-6
-            prose-p:text-zinc-300 prose-p:leading-relaxed prose-p:text-base
-            prose-a:text-blue-400 prose-a:no-underline hover:prose-a:underline
-            prose-strong:text-white
-            prose-ul:text-zinc-300 prose-ol:text-zinc-300
-            prose-img:rounded-xl prose-img:border prose-img:border-zinc-800"
-          dangerouslySetInnerHTML={{ __html: article.body || "" }}
+          className="prose prose-invert max-w-none
+            prose-headings:font-bold prose-headings:tracking-tight prose-headings:text-white
+            prose-h2:text-2xl prose-h2:border-b prose-h2:border-zinc-800 prose-h2:pb-3 prose-h2:mt-12 prose-h2:mb-6 prose-h2:text-blue-50
+            prose-h3:text-xl prose-h3:mt-8 prose-h3:mb-4 prose-h3:text-zinc-100
+            prose-p:text-zinc-300 prose-p:leading-8 prose-p:text-base prose-p:my-5
+            prose-a:text-blue-400 prose-a:font-medium prose-a:underline-offset-4 hover:prose-a:text-blue-300
+            prose-strong:text-white prose-strong:font-bold prose-strong:bg-zinc-800/60 prose-strong:px-1 prose-strong:py-0.5 prose-strong:rounded
+            prose-ul:text-zinc-300 prose-ul:my-5 prose-ul:space-y-2
+            prose-ol:text-zinc-300 prose-ol:my-5 prose-ol:space-y-2
+            prose-li:leading-relaxed
+            prose-blockquote:border-l-4 prose-blockquote:border-blue-500 prose-blockquote:bg-zinc-900/50 prose-blockquote:py-2 prose-blockquote:px-4 prose-blockquote:rounded-r-lg prose-blockquote:text-zinc-300 prose-blockquote:not-italic
+            prose-img:rounded-2xl prose-img:border prose-img:border-zinc-800 prose-img:shadow-lg prose-img:my-8"
+          dangerouslySetInnerHTML={{ __html: formattedBody }}
         />
+
+        {/* 記事下 広告バナー */}
+        <div className="my-12">
+          <AdBanner position="bottom" />
+        </div>
 
         {/* 関連記事セクション */}
         {relatedArticles.length > 0 && (
           <section className="mt-16 pt-10 border-t border-zinc-800">
             <h2 className="text-xl font-bold text-white mb-6 flex items-center gap-2">
               <span className="w-2 h-2 rounded-full bg-blue-500"></span>
-              こちらの記事もおすすめ
+              こちらの戦術記事もおすすめ
             </h2>
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
               {relatedArticles.map((rel) => (
                 <Link
                   key={rel.id}
                   href={`/articles/${rel.slug}`}
-                  className="group block bg-zinc-900/60 border border-zinc-800 rounded-xl overflow-hidden hover:border-zinc-700 transition"
+                  className="group block bg-zinc-900/60 border border-zinc-800 rounded-xl overflow-hidden hover:border-zinc-700 hover:bg-zinc-900 transition duration-200"
                 >
                   <div className="aspect-video w-full overflow-hidden bg-zinc-800">
                     <img
