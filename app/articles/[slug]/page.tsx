@@ -6,7 +6,6 @@ import { client, Article } from "@/lib/microcms";
 import { CATEGORIES } from "@/lib/data/categories";
 import { SiteHeader } from "@/components/site-header";
 import { SiteFooter } from "@/components/site-footer";
-import { AdBanner } from "@/components/ad-banner";
 
 export const dynamic = "force-dynamic";
 
@@ -52,11 +51,10 @@ async function getRelatedArticles(
   }
 }
 
-// HTML特殊文字とマークダウンの完全正規化
+// HTML特殊文字とマークダウンの正規化
 function cleanAndFormatContent(content: string = ""): string {
   if (!content) return "";
 
-  // 1. エスケープされたHTML文字を本物のタグに戻す
   let clean = content
     .replace(/&lt;/g, "<")
     .replace(/&gt;/g, ">")
@@ -64,7 +62,6 @@ function cleanAndFormatContent(content: string = ""): string {
     .replace(/&#39;/g, "'")
     .replace(/&amp;/g, "&");
 
-  // 2. マークダウン記法が混ざっていた場合のHTML変換
   clean = clean
     .replace(/^### (.*$)/gim, '<h3 class="text-xl font-bold text-blue-300 mt-8 mb-4">$1</h3>')
     .replace(/^## (.*$)/gim, '<h2 class="text-2xl font-extrabold text-white mt-12 mb-6 pb-3 border-b border-zinc-800 flex items-center gap-2"><span class="w-1.5 h-6 bg-blue-500 rounded-full inline-block"></span>$1</h2>')
@@ -185,7 +182,7 @@ export default async function ArticleDetailPage({ params }: Props) {
             />
           </div>
 
-          {/* ✨ AI 要約ブロック */}
+          {/* AI 要約ブロック */}
           {aiSummary && (
             <div className="p-5 sm:p-6 rounded-2xl bg-gradient-to-br from-blue-950/40 to-zinc-900/50 border border-blue-500/30 backdrop-blur-sm mb-8 shadow-lg shadow-blue-950/20">
               <div className="flex items-center gap-2 mb-3 text-blue-400 font-bold text-xs font-mono tracking-wider uppercase">
@@ -199,7 +196,7 @@ export default async function ArticleDetailPage({ params }: Props) {
           )}
         </header>
 
-        {/* 記事本文（パース処理によりタグ文字列の残存を根絶） */}
+        {/* 記事本文 */}
         <article
           className="prose prose-invert max-w-none
             prose-headings:font-bold prose-headings:tracking-tight prose-headings:text-white
@@ -216,11 +213,6 @@ export default async function ArticleDetailPage({ params }: Props) {
         >
           {parse(cleanedHtml)}
         </article>
-
-        {/* 記事下 広告バナー */}
-        <div className="my-12">
-          <AdBanner position="bottom" />
-        </div>
 
         {/* 関連記事セクション */}
         {relatedArticles.length > 0 && (
