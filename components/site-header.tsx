@@ -1,87 +1,49 @@
 "use client";
 
+import { Suspense } from "react";
 import Link from "next/link";
-import { useState } from "react";
-import { usePathname, useSearchParams } from "next/navigation";
-import { Menu, X, Target } from "lucide-react";
-import type { Category } from "@/lib/types";
-import { SearchBar } from "@/components/search-bar";
+import { usePathname } from "next/navigation";
+import { SearchBar } from "./search-bar";
 
-type SiteHeaderProps = {
-  categories: Category[];
-};
+interface SiteHeaderProps {
+  categories: { id: string; label: string; slug?: string }[];
+}
 
-/**
- * カテゴリーはpropsとして受け取るだけで、ここには一切ハードコードしない。
- * lib/data/categories.ts の配列を増減させれば、このヘッダーのナビゲーションも
- * 自動的に増減する。
- */
 export function SiteHeader({ categories }: SiteHeaderProps) {
-  const [mobileOpen, setMobileOpen] = useState(false);
   const pathname = usePathname();
-  const searchParams = useSearchParams();
-  const activeCategoryId = searchParams.get("category");
 
   return (
-    <header className="sticky top-0 z-30 border-b border-slate-800 bg-slate-950/90 backdrop-blur">
-      <div className="mx-auto flex h-16 max-w-6xl items-center justify-between gap-4 px-4">
-        <Link href="/" className="flex shrink-0 items-center gap-2 text-lg font-bold text-slate-50">
-          <span className="flex h-8 w-8 items-center justify-center rounded-md bg-orange-500 text-slate-950">
-            <Target className="h-4.5 w-4.5" strokeWidth={2.5} />
-          </span>
-          NBA TACTICS LAB
-        </Link>
+    <header className="border-b border-zinc-800 bg-[#0d0f12]/90 backdrop-blur sticky top-0 z-50">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="flex items-center justify-between h-16 gap-4">
+          {/* サイトロゴ */}
+          <Link href="/" className="flex items-center gap-2 shrink-0">
+            <span className="font-extrabold text-lg sm:text-xl tracking-tight text-white font-mono">
+              NBA <span className="text-blue-500">TACTICS</span> LAB
+            </span>
+          </Link>
 
-        <nav className="hidden items-center gap-1 md:flex">
-          {categories.map((category) => {
-            const isActive = pathname === "/" && activeCategoryId === category.id;
-            return (
-              <Link
-                key={category.id}
-                href={`/?category=${category.id}`}
-                className={`rounded-lg px-3 py-2 text-sm transition-colors ${
-                  isActive
-                    ? "bg-orange-500/10 text-orange-400"
-                    : "text-slate-400 hover:text-slate-100"
-                }`}
-              >
-                {category.label}
-              </Link>
-            );
-          })}
-        </nav>
-
-        <div className="hidden md:block">
-          <SearchBar />
-        </div>
-
-        <button
-          type="button"
-          aria-label="メニューを開く"
-          className="text-slate-300 md:hidden"
-          onClick={() => setMobileOpen((v) => !v)}
-        >
-          {mobileOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
-        </button>
-      </div>
-
-      {mobileOpen && (
-        <div className="border-t border-slate-800 px-4 py-4 md:hidden">
-          <div className="mb-4">
-            <SearchBar onNavigate={() => setMobileOpen(false)} />
+          {/* 検索バー（PC表示） */}
+          <div className="hidden md:block flex-1 max-w-xs lg:max-w-sm mx-4">
+            <Suspense fallback={null}>
+              <SearchBar />
+            </Suspense>
           </div>
-          <nav className="flex flex-col gap-1">
+
+          {/* カテゴリーナビゲーション */}
+          <nav className="flex items-center gap-1 sm:gap-2 overflow-x-auto py-2 scrollbar-none">
             {categories.map((category) => {
-              const isActive = pathname === "/" && activeCategoryId === category.id;
+              const href = `/categories/${category.slug || category.id}`;
+              const isActive = pathname === href;
+
               return (
                 <Link
                   key={category.id}
-                  href={`/?category=${category.id}`}
-                  onClick={() => setMobileOpen(false)}
-                  className={`rounded-lg px-3 py-2 text-left text-sm transition-colors ${
+                  href={href}
+                  className={`px-3 py-1.5 rounded-lg text-xs font-medium tracking-wide transition-colors whitespace-nowrap ${
                     isActive
-                      ? "bg-orange-500/10 text-orange-400"
-                      : "text-slate-400 hover:text-slate-100"
+                      ? "bg-blue-500/10 text-blue-400 border border-blue-500/20"
+                      : "text-zinc-400 hover:text-zinc-100 hover:bg-zinc-800/50"
                   }`}
                 >
                   {category.label}
@@ -90,7 +52,16 @@ export function SiteHeader({ categories }: SiteHeaderProps) {
             })}
           </nav>
         </div>
-      )}
+
+        {/* モバイル用検索バー */}
+        <div className="pb-3 md:hidden">
+          <Suspense fallback={null}>
+            <SearchBar />
+          </Suspense>
+        </div>
+      </div>
     </header>
   );
 }
+
+export default SiteHeader;
