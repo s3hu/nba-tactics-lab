@@ -1,113 +1,110 @@
-import type { Metadata } from "next";
-import Image from "next/image";
-import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ArrowLeft } from "lucide-react";
-
-import { CATEGORIES, getCategoryById } from "@/lib/data/categories";
-import {
-  getAllArticleSlugs,
-  getArticleBySlug,
-  getRelatedArticles,
-} from "@/lib/api/articles";
-import { formatDate } from "@/lib/utils/format-date";
+import Link from "next/link";
+import { client, Article } from "@/lib/microcms";
+import { CATEGORIES } from "@/lib/data/categories";
 import { SiteHeader } from "@/components/site-header";
 import { SiteFooter } from "@/components/site-footer";
-import { ArticleContent } from "@/components/article-content";
-import { ArticleGrid } from "@/components/article-grid";
 
-type ArticlePageProps = {
-  // Next.js 15以降ではparamsもPromiseになるため、
-  // `params: Promise<{ slug: string }>` + `await params` に読み替える。
-  params: {
+export const dynamic = "force-dynamic";
+
+interface Props {
+  params: Promise<{
     slug: string;
-  };
-};
-
-/** ビルド時に全記事ページを静的生成するためのスラッグ一覧 */
-export async function generateStaticParams() {
-  const slugs = await getAllArticleSlugs();
-  return slugs.map((slug) => ({ slug }));
+  }>;
 }
 
-export async function generateMetadata({ params }: ArticlePageProps): Promise<Metadata> {
-  const article = await getArticleBySlug(params.slug);
-  if (!article) return { title: "記事が見つかりません | NBA TACTICS LAB" };
+export default async function ArticleDetailPage({ params }: Props) {
+  const { slug } = await params;
 
-  return {
-    title: `${article.title} | NBA TACTICS LAB`,
-    description: article.excerpt,
-    openGraph: {
-      title: article.title,
-      description: article.excerpt,
-      images: [article.thumbnailUrl],
+  // microCMSから該当のスラッグを持つ記事を1件取得
+  const data = await client.getList<Article>({
+    endpoint: "articles",
+    queries: {
+      filters: `slug[equals]${slug}`,
+      limit: 1,
     },
-  };
-}
+  });
 
-export default async function ArticlePage({ params }: ArticlePageProps) {
-  const article = await getArticleBySlug(params.slug);
-  if (!article) notFound();
+  const article = data.contents[0];
 
-  const category = getCategoryById(article.categoryId);
-  const related = await getRelatedArticles(article);
+  if (!article) {
+    notFound();
+  }
+
+  const categoryLabel = Array.isArray(article.contentType)
+    ? article.contentType[0]
+    : article.contentType || "TACTICS";
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100">
+    <div className="min-h-screen bg-[#0d0f12] text-white flex flex-col font-sans">
       <SiteHeader categories={CATEGORIES} />
 
-      <main className="mx-auto max-w-3xl px-4 py-10">
-        <Link
-          href="/"
-          className="mb-8 inline-flex items-center gap-1 font-mono text-sm text-slate-400 hover:text-orange-400"
-        >
-          <ArrowLeft className="h-4 w-4" /> 記事一覧へ戻る
-        </Link>
+      <main className="flex-1 max-w-4xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-10">
+        {/* パンくずリスト */}
+        <div className="flex items-center gap-2 text-xs font-mono text-zinc-400 mb-6">
+          <Link href="/" className="hover:text-white transition-colors">
+            HOME
+          </Link>
+          <span>/</span>
+          <span className="text-blue-400 uppercase">{categoryLabel}</span>
+        </div>
 
-        <div className="mb-5 flex flex-wrap items-center gap-2">
-          {category && (
-            <span className="rounded-full border border-orange-500/30 bg-orange-500/10 px-3 py-1 text-xs font-medium text-orange-400">
-              {category.label}
+        {/* 記事ヘッダー */}
+        <header className="mb-8">
+          <div className="flex items-center gap-3 mb-4">
+            <span className="text-xs font-mono font-semibold px-2.5 py-1 rounded bg-blue-500/10 text-blue-400 border border-blue-500/20 uppercase">
+              {categoryLabel}
             </span>
-          )}
-          <time dateTime={article.publishedAt} className="text-xs text-slate-500">
-            {formatDate(article.publishedAt)}
-          </time>
-        </div>
-
-        <h1 className="mb-6 text-2xl font-bold leading-tight text-slate-50 md:text-4xl">
-          {article.title}
-        </h1>
-
-        <div className="relative mb-8 aspect-video w-full overflow-hidden rounded-2xl border border-slate-800">
-          <Image
-            src={article.thumbnailUrl}
-            alt={article.title}
-            fill
-            priority
-            className="object-cover"
-          />
-        </div>
-
-        <ArticleContent blocks={article.content} />
-
-        <div className="mt-10 flex flex-wrap gap-2">
-          {article.tags.map((tag) => (
-            <span
-              key={tag}
-              className="rounded-full border border-slate-800 px-3 py-1 text-xs text-slate-500"
-            >
-              #{tag}
-            </span>
-          ))}
-        </div>
-
-        {related.length > 0 && (
-          <div className="mt-16">
-            <h2 className="mb-5 text-lg font-semibold text-slate-200">関連記事</h2>
-            <ArticleGrid articles={related} categories={CATEGORIES} />
+            <time className="text-xs font-mono text-zinc-400">
+              {new Date(article.publishedAt).toLocaleDateString("ja-JP", {
+                year: "numeric",
+                month: "short",
+                day: "numeric",
+              })}
+            </time>
           </div>
-        )}
+
+          <h1 className="text-2xl sm:text-4xl font-extrabold tracking-tight text-white leading-tight mb-6">
+            {article.title}
+          </h1>
+
+          {/* アイキャッチ画像 */}
+          <div className="aspect-video w-full rounded-2xl overflow-hidden border border-zinc-800 bg-zinc-900 mb-8">
+            <img
+              src={
+                article.eyecatch?.url
+                  ? `${article.eyecatch.url}?w=1200&fm=webp&q=85`
+                  : "https://images.unsplash.com/photo-1546519638-68e109498ffc?w=1200&auto=format&fit=crop&q=85"
+              }
+              alt={article.title}
+              className="w-full h-full object-cover"
+            />
+          </div>
+        </header>
+
+        {/* 記事本文 */}
+        <article
+          className="prose prose-invert max-w-none 
+            prose-headings:font-bold prose-headings:text-white
+            prose-h2:text-2xl prose-h2:border-b prose-h2:border-zinc-800 prose-h2:pb-3 prose-h2:mt-10
+            prose-h3:text-xl prose-h3:mt-6
+            prose-p:text-zinc-300 prose-p:leading-relaxed prose-p:text-base
+            prose-a:text-blue-400 prose-a:no-underline hover:prose-a:underline
+            prose-strong:text-white
+            prose-ul:text-zinc-300 prose-ol:text-zinc-300
+            prose-img:rounded-xl prose-img:border prose-img:border-zinc-800"
+          dangerouslySetInnerHTML={{ __html: article.body }}
+        />
+
+        {/* 戻るボタン */}
+        <div className="mt-14 pt-8 border-t border-zinc-800 flex justify-between items-center">
+          <Link
+            href="/"
+            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg bg-zinc-900 border border-zinc-700 text-sm font-medium text-zinc-200 hover:bg-zinc-800 hover:text-white transition-colors"
+          >
+            ← 記事一覧に戻る
+          </Link>
+        </div>
       </main>
 
       <SiteFooter categories={CATEGORIES} />
