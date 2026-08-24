@@ -1,6 +1,7 @@
 import { Metadata } from "next";
 import { notFound } from "next/navigation";
 import Link from "next/link";
+import Image from "next/image";
 
 type Props = {
   params: Promise<{ slug: string }>;
@@ -66,6 +67,87 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   };
 }
 
+// 本文レンダラー（配列形式・HTML文字列形式の両方に対応）
+function RenderContent({ content }: { content: any }) {
+  if (!content) return null;
+
+  // ブロック配列形式（JSON構造）の場合
+  if (Array.isArray(content)) {
+    return (
+      <div className="space-y-6">
+        {content.map((block: any, index: number) => {
+          switch (block.type) {
+            case "heading":
+              return block.level === 2 ? (
+                <h2
+                  key={index}
+                  className="text-2xl font-bold text-gray-900 border-b pb-2 pt-6 mt-8"
+                >
+                  {block.text}
+                </h2>
+              ) : (
+                <h3
+                  key={index}
+                  className="text-xl font-bold text-gray-800 pt-4 mt-6"
+                >
+                  {block.text}
+                </h3>
+              );
+            case "paragraph":
+              return (
+                <p key={index} className="text-gray-700 leading-relaxed text-base">
+                  {block.text}
+                </p>
+              );
+            case "list":
+              return (
+                <ul key={index} className="list-disc list-inside space-y-1 my-4">
+                  {block.items?.map((item: string, i: number) => (
+                    <li key={i} className="text-gray-700">
+                      {item}
+                    </li>
+                  ))}
+                </ul>
+              );
+            case "image":
+              return (
+                <figure key={index} className="my-8">
+                  <div className="relative w-full h-80 rounded-xl overflow-hidden bg-gray-100">
+                    <Image
+                      src={block.src}
+                      alt={block.alt || "記事画像"}
+                      fill
+                      className="object-cover"
+                    />
+                  </div>
+                  {block.caption && (
+                    <figcaption className="text-center text-xs text-gray-500 mt-2">
+                      {block.caption}
+                    </figcaption>
+                  )}
+                </figure>
+              );
+            default:
+              return null;
+          }
+        })}
+      </div>
+    );
+  }
+
+  // HTML文字列形式の場合
+  if (typeof content === "string") {
+    return (
+      <div
+        className="prose prose-lg max-w-none text-gray-800 leading-relaxed [&>h2]:text-2xl [&>h2]:font-bold [&>h2]:border-b [&>h2]:pb-2 [&>h2]:pt-6 [&>h2]:mt-8 [&>p]:my-4 [&>p]:leading-relaxed"
+        dangerouslySetInnerHTML={{ __html: content }}
+      />
+    );
+  }
+
+  return null;
+}
+
 // 記事詳細ページ
 export default async function ArticlePage({ params }: Props) {
   const { slug } = await params;
@@ -75,21 +157,23 @@ export default async function ArticlePage({ params }: Props) {
     notFound();
   }
 
-  // microCMS の各フィールドからAI要約を抽出
   const aiSummary =
     article.summary ||
     article.aiSummary ||
     article.ai_summary ||
-    article.description ||
-    article.excerpt;
+    article.description;
 
-  // 本文HTMLを取得
   const mainContent =
-    article.content || article.body || article.text || "";
+    article.content || article.body || article.text;
+
+  const eyeCatchUrl =
+    article.eyecatch?.url ||
+    article.thumbnail?.url ||
+    article.thumbnailUrl;
 
   return (
     <div className="max-w-4xl mx-auto px-4 py-12">
-      {/* パンくずリスト風ナビゲーション */}
+      {/* ナビゲーション */}
       <nav className="text-xs text-gray-500 mb-6 flex items-center gap-2">
         <Link href="/" className="hover:underline text-gray-600">
           HOME
@@ -109,10 +193,23 @@ export default async function ArticlePage({ params }: Props) {
           )}
         </p>
 
-        {/* タイトル */}
-        <h1 className="text-3xl sm:text-4xl font-black text-gray-900 leading-tight mb-8">
+        {/* 記事タイトル */}
+        <h1 className="text-3xl sm:text-4xl font-black text-gray-900 leading-tight mb-6">
           {article.title}
         </h1>
+
+        {/* アイキャッチ画像 */}
+        {eyeCatchUrl && (
+          <div className="relative w-full h-64 sm:h-96 rounded-2xl overflow-hidden mb-8 bg-gray-100 shadow-sm">
+            <Image
+              src={eyeCatchUrl}
+              alt={article.title}
+              fill
+              priority
+              className="object-cover"
+            />
+          </div>
+        )}
 
         {/* AI 3行要約ボックス */}
         {aiSummary && (
@@ -128,14 +225,13 @@ export default async function ArticlePage({ params }: Props) {
         )}
 
         {/* 記事本文 */}
-        <div
-          className="prose prose-lg max-w-none text-gray-800 leading-relaxed space-y-4"
-          dangerouslySetInnerHTML={{ __html: mainContent }}
-        />
+        <div className="mt-8">
+          <RenderContent content={mainContent} />
+        </div>
       </article>
 
       {/* 戻るリンク */}
-      <div className="mt-12 pt-8 border-t border-gray-200">
+      <div className="mt-16 pt-8 border-t border-gray-200">
         <Link
           href="/"
           className="inline-flex items-center text-sm font-semibold text-blue-600 hover:text-blue-800 transition"
