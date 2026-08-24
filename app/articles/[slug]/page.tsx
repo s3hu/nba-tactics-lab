@@ -6,7 +6,7 @@ type Props = {
   params: Promise<{ slug: string }>;
 };
 
-// microCMS から記事詳細を取得
+// microCMS から記事詳細を取得（ID指定 または スラッグ検索）
 async function getArticle(slug: string): Promise<Article | null> {
   const serviceDomain = process.env.MICROCMS_SERVICE_DOMAIN;
   const apiKey = process.env.MICROCMS_API_KEY;
@@ -14,34 +14,55 @@ async function getArticle(slug: string): Promise<Article | null> {
   if (!serviceDomain || !apiKey) return null;
 
   try {
-    const res = await fetch(
+    // 1. まずコンテンツIDとして直接取得を試みる
+    const directRes = await fetch(
       `https://${serviceDomain}.microcms.io/api/v1/articles/${slug}`,
       {
-        headers: {
-          "X-MICROCMS-API-KEY": apiKey,
-        },
+        headers: { "X-MICROCMS-API-KEY": apiKey },
         next: { revalidate: 60 },
       }
     );
 
-    if (!res.ok) return null;
-    const data = await res.json();
+    if (directRes.ok) {
+      const data = await directRes.json();
+      return mapArticle(data);
+    }
 
-    return {
-      slug: data.id,
-      title: data.title,
-      excerpt: data.summary || "",
-      publishedAt: data.publishedAt || data.createdAt,
-      thumbnailUrl: data.thumbnail?.url || "",
-      categoryId: data.category?.id || "uncategorized",
-      tags: data.tags || [],
-      content: data.content || [],
-      seoTitle: data.seoTitle,
-      summary: data.summary,
-    };
+    // 2. 失敗した場合はスラッグ（URL名）で検索して取得
+    const filterRes = await fetch(
+      `https://${serviceDomain}.microcms.io/api/v1/articles?filters=slug[equals]${slug}`,
+      {
+        headers: { "X-MICROCMS-API-KEY": apiKey },
+        next: { revalidate: 60 },
+      }
+    );
+
+    if (filterRes.ok) {
+      const filterData = await filterRes.json();
+      if (filterData.contents && filterData.contents.length > 0) {
+        return mapArticle(filterData.contents[0]);
+      }
+    }
+
+    return null;
   } catch (error) {
     return null;
   }
+}
+
+function mapArticle(data: any): Article {
+  return {
+    slug: data.id,
+    title: data.title,
+    excerpt: data.summary || "",
+    publishedAt: data.publishedAt || data.createdAt,
+    thumbnailUrl: data.thumbnail?.url || "",
+    categoryId: data.category?.id || "uncategorized",
+    tags: data.tags || [],
+    content: data.content || [],
+    seoTitle: data.seoTitle,
+    summary: data.summary,
+  };
 }
 
 // SEOメタデータの動的生成
@@ -53,7 +74,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
   return {
     title: article.seoTitle || article.title,
-    description: article.summary || article.excerpt || `${article.title}の解説記事です。`,
+    description: article.summary || `${article.title}の解説記事です。`,
   };
 }
 
