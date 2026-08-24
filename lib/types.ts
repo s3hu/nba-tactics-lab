@@ -53,6 +53,10 @@ export type Article = {
   author?: Author;
   /** 記事本文（ブロック配列） */
   content: ContentBlock[];
+  /** AI生成されたSEO向けタイトル */
+  seoTitle?: string;
+  /** AI生成された要約文 */
+  summary?: string;
 };
 
 /** 記事一覧取得時の絞り込み条件 */
