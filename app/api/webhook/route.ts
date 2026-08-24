@@ -1,8 +1,4 @@
 import { NextRequest, NextResponse } from "next/server";
-import { GoogleGenerativeAI } from "@google/generative-ai";
-
-const apiKey = process.env.GEMINI_API_KEY || "";
-const genAI = new GoogleGenerativeAI(apiKey);
 
 export async function GET() {
   return NextResponse.json({ status: "Webhook endpoint is active" });
@@ -23,26 +19,40 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ message: "No contentId" }, { status: 200 });
     }
 
+    const apiKey = process.env.GEMINI_API_KEY;
     if (!apiKey) {
       console.error("GEMINI_API_KEY is missing");
       return NextResponse.json({ error: "API Key missing" }, { status: 500 });
     }
 
-    // モデル名を gemini-1.5-flash-latest に変更
-    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash-latest" });
-
+    // Gemini API を直接呼出 (gemini-2.0-flash / gemini-1.5-flash 両対応)
     const prompt = `あなたはNBA専門のSEOライターです。以下の記事のタイトルと本文を読み、SEOに強いタイトル案（32文字以内）と、記事の要約（100〜120文字程度）を作成してください。
 
-必ず以下のJSONフォーマットのみを返してください。Markdown記法やコードブロック（\`\`\`json）は含めないでください。
+必ず以下のJSON形式のみを出力してください。Markdown修飾やバッククォートは一切不要です。
 {"seoTitle": "タイトル", "summary": "要約"}
 
 記事タイトル: ${title}
 記事本文: ${cleanContent || title}`;
 
-    const result = await model.generateContent(prompt);
-    const responseText = result.response.text().trim();
-    console.log("Gemini Raw Response:", responseText);
+    const geminiRes = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          contents: [{ parts: [{ text: prompt }] }],
+        }),
+      }
+    );
 
+    const geminiData = await geminiRes.json();
+    console.log("Gemini Response Data:", JSON.stringify(geminiData, null, 2));
+
+    if (!geminiRes.ok) {
+      throw new Error(geminiData.error?.message || "Gemini API failed");
+    }
+
+    const responseText = geminiData.candidates[0].content.parts[0].text.trim();
     const cleanedJson = responseText.replace(/```json|```/g, "").trim();
     const { seoTitle, summary } = JSON.parse(cleanedJson);
 
