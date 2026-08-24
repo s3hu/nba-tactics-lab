@@ -14,7 +14,7 @@ interface Props {
   }>;
 }
 
-// microCMS から記事を取得
+// 記事詳細を取得
 async function getArticleData(slug: string): Promise<Article | null> {
   try {
     const data = await client.getList<Article>({
@@ -27,6 +27,26 @@ async function getArticleData(slug: string): Promise<Article | null> {
     return data.contents[0] || null;
   } catch (e) {
     return null;
+  }
+}
+
+// 同じカテゴリーの関連記事を取得（現在の記事は除外して最大3件）
+async function getRelatedArticles(
+  categoryName: string,
+  currentArticleId: string
+): Promise<Article[]> {
+  try {
+    const data = await client.getList<Article>({
+      endpoint: "articles",
+      queries: {
+        filters: `contentType[contains]${categoryName}[and]id[not_equals]${currentArticleId}`,
+        limit: 3,
+        orders: "-publishedAt",
+      },
+    });
+    return data.contents;
+  } catch (e) {
+    return [];
   }
 }
 
@@ -46,26 +66,6 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   };
 }
 
-// エスケープされたHTMLタグを正常なHTMLに復元する関数
-function sanitizeAndFormatContent(content: string): string {
-  if (!content) return "";
-
-  // &lt;h2&gt; などのHTMLエンティティをデコード
-  let formatted = content
-    .replace(/&lt;/g, "<")
-    .replace(/&gt;/g, ">")
-    .replace(/&quot;/g, '"')
-    .replace(/&#39;/g, "'")
-    .replace(/&amp;/g, "&");
-
-  // HTMLタグが含まれていないプレーンテキストの場合は改行を<br/>に変換
-  if (!/<[a-z][\s\S]*>/i.test(formatted)) {
-    formatted = formatted.replace(/\n/g, "<br />");
-  }
-
-  return formatted;
-}
-
 export default async function ArticleDetailPage({ params }: Props) {
   const { slug } = await params;
   const article = await getArticleData(slug);
@@ -78,18 +78,15 @@ export default async function ArticleDetailPage({ params }: Props) {
     ? article.contentType[0]
     : article.contentType || "TACTICS";
 
+  // 関連記事を取得
+  const relatedArticles = await getRelatedArticles(categoryLabel, article.id);
+
   // AI要約の取得
   const aiSummary =
     (article as any).summary ||
     (article as any).aiSummary ||
     (article as any).ai_summary ||
     (article as any).description;
-
-  // 本文の取得とHTML復元
-  const rawBody = article.body || (article as any).content || "";
-  const renderedBody = sanitizeAndFormatContent(
-    typeof rawBody === "string" ? rawBody : JSON.stringify(rawBody)
-  );
 
   return (
     <div className="min-h-screen bg-[#0d0f12] text-white flex flex-col font-sans">
@@ -157,16 +154,52 @@ export default async function ArticleDetailPage({ params }: Props) {
             prose-headings:font-bold prose-headings:text-white
             prose-h2:text-2xl prose-h2:border-b prose-h2:border-zinc-800 prose-h2:pb-3 prose-h2:mt-10
             prose-h3:text-xl prose-h3:mt-6
-            prose-p:text-zinc-300 prose-p:leading-relaxed prose-p:text-base prose-p:my-4
+            prose-p:text-zinc-300 prose-p:leading-relaxed prose-p:text-base
             prose-a:text-blue-400 prose-a:no-underline hover:prose-a:underline
             prose-strong:text-white
             prose-ul:text-zinc-300 prose-ol:text-zinc-300
             prose-img:rounded-xl prose-img:border prose-img:border-zinc-800"
-          dangerouslySetInnerHTML={{ __html: renderedBody }}
+          dangerouslySetInnerHTML={{ __html: article.body || "" }}
         />
 
+        {/* 関連記事セクション */}
+        {relatedArticles.length > 0 && (
+          <section className="mt-16 pt-10 border-t border-zinc-800">
+            <h2 className="text-xl font-bold text-white mb-6 flex items-center gap-2">
+              <span className="w-2 h-2 rounded-full bg-blue-500"></span>
+              こちらの記事もおすすめ
+            </h2>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              {relatedArticles.map((rel) => (
+                <Link
+                  key={rel.id}
+                  href={`/articles/${rel.slug}`}
+                  className="group block bg-zinc-900/60 border border-zinc-800 rounded-xl overflow-hidden hover:border-zinc-700 transition"
+                >
+                  <div className="aspect-video w-full overflow-hidden bg-zinc-800">
+                    <img
+                      src={
+                        rel.eyecatch?.url
+                          ? `${rel.eyecatch.url}?w=500&fm=webp&q=80`
+                          : "https://images.unsplash.com/photo-1546519638-68e109498ffc?w=500&auto=format&fit=crop&q=80"
+                      }
+                      alt={rel.title}
+                      className="w-full h-full object-cover group-hover:scale-105 transition duration-300"
+                    />
+                  </div>
+                  <div className="p-3.5">
+                    <h3 className="text-xs font-bold text-zinc-200 group-hover:text-blue-400 line-clamp-2 transition-colors">
+                      {rel.title}
+                    </h3>
+                  </div>
+                </Link>
+              ))}
+            </div>
+          </section>
+        )}
+
         {/* 戻るボタン */}
-        <div className="mt-14 pt-8 border-t border-zinc-800 flex justify-between items-center">
+        <div className="mt-12 pt-8 border-t border-zinc-800 flex justify-between items-center">
           <Link
             href="/"
             className="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg bg-zinc-900 border border-zinc-700 text-sm font-medium text-zinc-200 hover:bg-zinc-800 hover:text-white transition-colors"
