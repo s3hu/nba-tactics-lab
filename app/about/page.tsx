@@ -1,0 +1,49 @@
+import Link from "next/link";
+import { CATEGORIES } from "@/lib/data/categories";
+import { SiteHeader } from "@/components/site-header";
+import { SiteFooter } from "@/components/site-footer";
+
+export default function AboutPage() {
+  return (
+    <div className="min-h-screen bg-[#0d0f12] text-white flex flex-col font-sans">
+      <SiteHeader categories={CATEGORIES} />
+
+      <main className="flex-1 max-w-4xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-12">
+        <div className="flex items-center gap-2 text-xs font-mono text-zinc-400 mb-6">
+          <Link href="/" className="hover:text-white transition-colors">
+            HOME
+          </Link>
+          <span>/</span>
+          <span className="text-blue-400 uppercase">ABOUT US</span>
+        </div>
+
+        <h1 className="text-3xl font-extrabold text-white mb-8 pb-4 border-b border-zinc-800">
+          このサイトについて
+        </h1>
+
+        <div className="prose prose-invert max-w-none text-zinc-300 space-y-6 text-sm leading-relaxed">
+          <section>
+            <h2 className="text-lg font-bold text-white mb-2">NBA TACTICS LAB とは</h2>
+            <p>
+              NBA TACTICS LAB は、NBAの試合戦術、セットオフェンス、ディフェンススキーム、選手のスタッツや特徴を深く掘り下げて解説する専門メディアです。
+            </p>
+            <p>
+              「試合観戦が一段深くなる」をコンセプトに、ハイライトを見るだけでは分からない戦術の意図やチームごとのシステムを分かりやすくお届けします。
+            </p>
+          </section>
+
+          <section>
+            <h2 className="text-lg font-bold text-white mb-2">主なコンテンツ</h2>
+            <ul className="list-disc list-inside space-y-2 text-zinc-400">
+              <li><strong className="text-zinc-200">戦術解説（TACTICS）:</strong> ピック＆ロール、アイソレーション、ゾーンディフェンス等の徹底分解</li>
+              <li><strong className="text-zinc-200">チーム別解説:</strong> 各チームのオフェンスレーティングやプレースタイルの分析</li>
+              <li><strong className="text-zinc-200">コラム・ニュース:</strong> トレンド戦術や注目選手の深掘り記事</li>
+            </ul>
+          </section>
+        </div>
+      </main>
+
+      <SiteFooter categories={CATEGORIES} />
+    </div>
+  );
+}
