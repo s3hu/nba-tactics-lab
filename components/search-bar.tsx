@@ -1,46 +1,66 @@
 "use client";
 
-import { useRouter, useSearchParams } from "next/navigation";
-import { Search } from "lucide-react";
-import { useState, type FormEvent } from "react";
+import { Suspense } from "react";
+import Link from "next/link";
+import { usePathname } from "next/navigation";
+import { Category } from "@/types";
+import { SearchBar } from "./search-bar";
 
-type SearchBarProps = {
-  onNavigate?: () => void;
-};
+interface SiteHeaderProps {
+  categories: Category[];
+}
 
-/**
- * トップページの記事一覧を絞り込むための検索バー。
- * 送信するとURLの ?q= パラメータを更新するだけなので、
- * 実際のフィルタリングロジックは app/page.tsx（サーバー側）に閉じている。
- */
-export function SearchBar({ onNavigate }: SearchBarProps) {
-  const router = useRouter();
-  const searchParams = useSearchParams();
-  const [value, setValue] = useState(searchParams.get("q") ?? "");
-
-  function handleSubmit(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    const params = new URLSearchParams(searchParams.toString());
-    if (value.trim()) {
-      params.set("q", value.trim());
-    } else {
-      params.delete("q");
-    }
-    router.push(`/?${params.toString()}`);
-    onNavigate?.();
-  }
+export function SiteHeader({ categories }: SiteHeaderProps) {
+  const pathname = usePathname();
 
   return (
-    <form onSubmit={handleSubmit} className="relative w-full max-w-xs">
-      <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-500" />
-      <input
-        type="search"
-        value={value}
-        onChange={(e) => setValue(e.target.value)}
-        placeholder="記事を検索"
-        aria-label="記事を検索"
-        className="w-full rounded-lg border border-slate-700 bg-slate-900 py-2 pl-9 pr-3 text-sm text-slate-100 placeholder:text-slate-500 focus:border-orange-500 focus:outline-none"
-      />
-    </form>
+    <header className="border-b border-zinc-800 bg-[#0d0f12]/90 backdrop-blur sticky top-0 z-50">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="flex items-center justify-between h-16 gap-4">
+          {/* サイトロゴ */}
+          <Link href="/" className="flex items-center gap-2 shrink-0">
+            <span className="font-extrabold text-lg sm:text-xl tracking-tight text-white font-mono">
+              NBA <span className="text-blue-500">TACTICS</span> LAB
+            </span>
+          </Link>
+
+          {/* 検索バー（PC・タブレット表示） */}
+          <div className="hidden md:block flex-1 max-w-xs lg:max-w-sm mx-4">
+            <Suspense fallback={null}>
+              <SearchBar />
+            </Suspense>
+          </div>
+
+          {/* カテゴリーナビゲーション */}
+          <nav className="flex items-center gap-1 sm:gap-2 overflow-x-auto py-2 scrollbar-none">
+            {categories.map((category) => {
+              const href = `/categories/${category.slug || category.id}`;
+              const isActive = pathname === href;
+
+              return (
+                <Link
+                  key={category.id}
+                  href={href}
+                  className={`px-3 py-1.5 rounded-lg text-xs font-medium tracking-wide transition-colors whitespace-nowrap ${
+                    isActive
+                      ? "bg-blue-500/10 text-blue-400 border border-blue-500/20"
+                      : "text-zinc-400 hover:text-zinc-100 hover:bg-zinc-800/50"
+                  }`}
+                >
+                  {category.label}
+                </Link>
+              );
+            })}
+          </nav>
+        </div>
+
+        {/* モバイル用検索バー（画面幅が狭い場合） */}
+        <div className="pb-3 md:hidden">
+          <Suspense fallback={null}>
+            <SearchBar />
+          </Suspense>
+        </div>
+      </div>
+    </header>
   );
 }
