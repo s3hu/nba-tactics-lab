@@ -14,7 +14,7 @@ interface Props {
   }>;
 }
 
-// microCMS から記事を取得するヘルパー
+// microCMS から記事を取得
 async function getArticleData(slug: string): Promise<Article | null> {
   try {
     const data = await client.getList<Article>({
@@ -30,7 +30,7 @@ async function getArticleData(slug: string): Promise<Article | null> {
   }
 }
 
-// SEOメタデータの設定
+// SEOメタデータ
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params;
   const article = await getArticleData(slug);
@@ -46,6 +46,26 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   };
 }
 
+// エスケープされたHTMLタグを正常なHTMLに復元する関数
+function sanitizeAndFormatContent(content: string): string {
+  if (!content) return "";
+
+  // &lt;h2&gt; などのHTMLエンティティをデコード
+  let formatted = content
+    .replace(/&lt;/g, "<")
+    .replace(/&gt;/g, ">")
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;/g, "'")
+    .replace(/&amp;/g, "&");
+
+  // HTMLタグが含まれていないプレーンテキストの場合は改行を<br/>に変換
+  if (!/<[a-z][\s\S]*>/i.test(formatted)) {
+    formatted = formatted.replace(/\n/g, "<br />");
+  }
+
+  return formatted;
+}
+
 export default async function ArticleDetailPage({ params }: Props) {
   const { slug } = await params;
   const article = await getArticleData(slug);
@@ -58,12 +78,18 @@ export default async function ArticleDetailPage({ params }: Props) {
     ? article.contentType[0]
     : article.contentType || "TACTICS";
 
-  // AI要約の取得（各種フィールド名に対応）
+  // AI要約の取得
   const aiSummary =
     (article as any).summary ||
     (article as any).aiSummary ||
     (article as any).ai_summary ||
     (article as any).description;
+
+  // 本文の取得とHTML復元
+  const rawBody = article.body || (article as any).content || "";
+  const renderedBody = sanitizeAndFormatContent(
+    typeof rawBody === "string" ? rawBody : JSON.stringify(rawBody)
+  );
 
   return (
     <div className="min-h-screen bg-[#0d0f12] text-white flex flex-col font-sans">
@@ -131,12 +157,12 @@ export default async function ArticleDetailPage({ params }: Props) {
             prose-headings:font-bold prose-headings:text-white
             prose-h2:text-2xl prose-h2:border-b prose-h2:border-zinc-800 prose-h2:pb-3 prose-h2:mt-10
             prose-h3:text-xl prose-h3:mt-6
-            prose-p:text-zinc-300 prose-p:leading-relaxed prose-p:text-base
+            prose-p:text-zinc-300 prose-p:leading-relaxed prose-p:text-base prose-p:my-4
             prose-a:text-blue-400 prose-a:no-underline hover:prose-a:underline
             prose-strong:text-white
             prose-ul:text-zinc-300 prose-ol:text-zinc-300
             prose-img:rounded-xl prose-img:border prose-img:border-zinc-800"
-          dangerouslySetInnerHTML={{ __html: article.body || (article as any).content || "" }}
+          dangerouslySetInnerHTML={{ __html: renderedBody }}
         />
 
         {/* 戻るボタン */}
