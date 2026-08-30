@@ -1,0 +1,62 @@
+{
+  "title": "スペインP&Rのメカニズム：3人目のスクリーナーが引き起こす守備崩壊と現代NBAの最新傾向",
+  "slug": "spain-pick-and-roll-mechanics",
+  "contentId": "x24knrx73j-3",
+  "contentType": [
+    "TACTICS"
+  ],
+  "summary": "スペインP&Rは、通常のP&Rに第3のバックスクリーンを重ね、ロールを守るビッグの視界と進路を同時に奪う。\nハンドラーの侵入、スクリーナーのダイブ、シューターのポップアウトが、ドロップディフェンスに三方向の決断を迫る。\nその破壊力と、スイッチ、ブリッツ、トップロックへの再カウンターを実戦例から読み解く。",
+  "seoTitle": "スペインP&R完全解説｜ドロップを破壊する3人連動と守備対策",
+  "bodyFile": "content-drafts/spain-pnr-drop-defense-phoenix-suns.html",
+  "endpoint": "articles",
+  "board": {
+    "mode": "manual",
+    "promptsFile": "content-drafts/spain-pnr-board-prompts.md",
+    "imageUrls": [],
+    "status": "awaiting-user-images"
+  },
+  "fields": {
+    "sourceUrls": true
+  },
+  "quality": {
+    "minimumBodyChars": 2400,
+    "minimumVideos": 3,
+    "minimumImages": 0,
+    "requiredSections": [
+      "第1章",
+      "第2章",
+      "第3章",
+      "第4章",
+      "まとめ"
+    ],
+    "requiredTerms": [
+      "ピック＆ロール",
+      "ドロップディフェンス",
+      "バックスクリーン",
+      "ハンドラー",
+      "スクリーナー",
+      "ポップアウト",
+      "ショートロール",
+      "スイッチ",
+      "ブリッツ"
+    ],
+    "namedExamples": [
+      "クリス・ポール",
+      "ディアンドレ・エイトン",
+      "デビン・ブッカー",
+      "ルカ・ドンチッチ",
+      "カイリー・アービング",
+      "フェニックス・サンズ",
+      "ダラス・マーベリックス"
+    ],
+    "minimumNamedExamples": 5
+  },
+  "sourceUrls": [
+    "https://www.nba.com/news/film-study-key-plays-actions-2022-playoffs",
+    "https://www.nba.com/news/film-study-how-kyrie-irving-fits-with-dallas",
+    "https://www.nba.com/watch/video/2020/07/13/film-study-mavs-stack-pick-and-roll",
+    "https://basketballimmersion.com/wp-content/uploads/2021/10/Sergio-Scariolo-Spain-Pick-and-Roll.pdf",
+    "https://www.youtube.com/watch?v=W3nHqWA3vJk"
+  ],
+  "status": "draft"
+}

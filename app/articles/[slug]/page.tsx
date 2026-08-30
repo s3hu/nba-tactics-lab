@@ -1,7 +1,7 @@
 import { Metadata } from "next";
 import { notFound } from "next/navigation";
 import Link from "next/link";
-import parse from "html-react-parser";
+import parse, { Element, Text, type HTMLReactParserOptions } from "html-react-parser";
 import { client, Article } from "@/lib/microcms";
 import { CATEGORIES } from "@/lib/data/categories";
 import { SiteHeader } from "@/components/site-header";
@@ -12,6 +12,64 @@ export const dynamic = "force-dynamic";
 interface Props {
   params: Promise<{ slug: string }>;
 }
+
+function getYouTubeVideoId(href: string): string | null {
+  try {
+    const url = new URL(href);
+    const hostname = url.hostname.toLowerCase().replace(/^www\./, "");
+    let videoId: string | null = null;
+
+    if (hostname === "youtu.be") {
+      videoId = url.pathname.split("/").filter(Boolean)[0] || null;
+    } else if (hostname === "youtube.com" || hostname === "m.youtube.com") {
+      if (url.pathname === "/watch") {
+        videoId = url.searchParams.get("v");
+      } else {
+        const pathParts = url.pathname.split("/").filter(Boolean);
+        if (["embed", "shorts", "live"].includes(pathParts[0])) {
+          videoId = pathParts[1] || null;
+        }
+      }
+    }
+
+    return videoId && /^[A-Za-z0-9_-]{11}$/.test(videoId) ? videoId : null;
+  } catch {
+    return null;
+  }
+}
+
+const articleParserOptions: HTMLReactParserOptions = {
+  replace(domNode) {
+    if (!(domNode instanceof Element) || domNode.name !== "p") return;
+
+    const meaningfulChildren = domNode.children.filter(
+      (child) => !(child instanceof Text && child.data.trim() === ""),
+    );
+    if (meaningfulChildren.length !== 1) return;
+
+    const link = meaningfulChildren[0];
+    if (!(link instanceof Element) || link.name !== "a") return;
+
+    const videoId = getYouTubeVideoId(link.attribs.href || "");
+    if (!videoId) return;
+
+    const title = link.children
+      .filter((child): child is Text => child instanceof Text)
+      .map((child) => child.data.trim())
+      .filter(Boolean)
+      .join(" ") || "NBA tactics video";
+
+    return (
+      <iframe
+        src={`https://www.youtube.com/embed/${videoId}?rel=0`}
+        title={title}
+        loading="lazy"
+        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+        allowFullScreen
+      />
+    );
+  },
+};
 
 async function getArticleData(slug: string): Promise<Article | null> {
   try {
@@ -212,7 +270,7 @@ export default async function ArticleDetailPage({ params }: Props) {
 
         {/* 記事本文 */}
         <article className="article-content font-sans">
-          {parse(article.body || "")}
+          {parse(article.body || "", articleParserOptions)}
         </article>
 
         {relatedArticles.length > 0 && (
