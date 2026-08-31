@@ -28,6 +28,13 @@ export default function RootLayout({
 }) {
   return (
     <html lang="ja">
+      <head>
+        <script
+          async
+          src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-9905985705880183"
+          crossOrigin="anonymous"
+        />
+      </head>
       <body className={`${inter.className} bg-[#0d0f12] text-zinc-100 min-h-screen antialiased`}>
         {children}
       </body>
