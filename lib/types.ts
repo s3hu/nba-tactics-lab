@@ -15,6 +15,8 @@ export type Category = {
   label: string;
   /** カテゴリー一覧ページなどで使うslug（基本はidと同じでよい） */
   slug: string;
+  /** microCMSのcontentTypeに保存される値（例: "TACTICS"） */
+  cmsValue?: string;
   /** 一覧ページの説明文などに使う任意の補足 */
   description?: string;
 };

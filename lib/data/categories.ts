@@ -12,30 +12,35 @@ import type { Category } from "@/lib/types";
 export const CATEGORIES: Category[] = [
   {
     id: "news",
+    cmsValue: "NEWS",
     label: "ニュース",
     slug: "news",
     description: "移籍・怪我情報・試合結果など速報性の高いトピック",
   },
   {
     id: "column",
+    cmsValue: "COLUMN",
     label: "コラム",
     slug: "column",
     description: "選手やチームを独自の切り口で語る読み物",
   },
   {
     id: "tactics",
+    cmsValue: "TACTICS",
     label: "戦術解説",
     slug: "tactics",
     description: "セットプレーやディフェンス戦術をロジカルに分解する記事",
   },
   {
     id: "team",
+    cmsValue: "TEAM",
     label: "チーム別解説",
     slug: "team",
     description: "特定チームの編成・戦力を深掘りする記事",
   },
   {
     id: "highlight",
+    cmsValue: "HIGHLIGHT",
     label: "ハイライト",
     slug: "highlight",
     description: "試合のハイライトプレーや名場面を振り返る記事",

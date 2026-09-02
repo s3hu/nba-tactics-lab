@@ -11,6 +11,7 @@ The CLI is intentionally safe by default:
 from __future__ import annotations
 
 import argparse
+import html
 import json
 import os
 import re
@@ -393,12 +394,29 @@ def replace_board_url(spec: dict[str, Any], body: str, media_url: str | None) ->
 
 
 def build_payload(spec: dict[str, Any], body: str, eyecatch_url: str | None = None) -> dict[str, Any]:
+    # microCMSのリッチエディタはContent API経由のiframeを除去するため、
+    # YouTube埋め込みは安全な通常リンクとして保存し、フロント側でiframeへ戻す。
+    iframe_pattern = re.compile(r'<iframe\b(?P<attrs>[^>]*)>\s*</iframe>', re.IGNORECASE | re.DOTALL)
+
+    def iframe_to_youtube_link(match: re.Match[str]) -> str:
+        attrs = match.group("attrs")
+        src_match = re.search(r'\bsrc=["\']([^"\']+)["\']', attrs, re.IGNORECASE)
+        if not src_match:
+            return match.group(0)
+        video_id = youtube_video_id(html.unescape(src_match.group(1)))
+        if not video_id:
+            return match.group(0)
+        title_match = re.search(r'\btitle=["\']([^"\']*)["\']', attrs, re.IGNORECASE)
+        title = html.unescape(title_match.group(1)).strip() if title_match else "NBA tactics video"
+        return f'<p><a href="https://www.youtube.com/watch?v={video_id}">{html.escape(title)}</a></p>'
+
+    cms_body = iframe_pattern.sub(iframe_to_youtube_link, body)
     payload: dict[str, Any] = {
         "title": spec["title"],
         "slug": spec["slug"],
         "contentType": spec["contentType"],
         "summary": spec["summary"],
-        "body": body,
+        "body": cms_body,
     }
     for key in ("seoTitle", "publishedAt"):
         if spec.get(key):

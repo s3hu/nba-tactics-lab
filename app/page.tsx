@@ -4,31 +4,28 @@ import { SiteHeader } from "@/components/site-header";
 import { SiteFooter } from "@/components/site-footer";
 import { HeroSection } from "@/components/hero-section";
 import { CategoryTabs } from "@/components/category-tabs";
+import { LoadMoreArticles } from "@/components/load-more-articles";
 
 export const dynamic = "force-dynamic";
 
 export default async function Home() {
-  // microCMSから最新記事を取得
-  const data = await client.getList<Article>({
+  const articles = await client.getAllContents<Article>({
     endpoint: "articles",
     queries: { orders: "-publishedAt" },
   });
-  const articles = data.contents;
 
-  // 特集記事（HeroSection）用のフォーマット
   const firstArticle = articles[0];
   const featuredArticle = firstArticle
     ? ({
         id: firstArticle.id,
         title: firstArticle.title,
         slug: firstArticle.slug,
-        // AI要約があればそれを使い、なければ本文からHTMLタグを除去して抜粋
         summary:
-          (firstArticle as any).summary ||
-          firstArticle.body?.replace(/<[^>]*>?/gm, "").slice(0, 120) + "...",
+          (firstArticle as Article & { summary?: string }).summary ||
+          `${firstArticle.body?.replace(/<[^>]*>?/gm, "").slice(0, 120)}...`,
         excerpt:
-          (firstArticle as any).summary ||
-          firstArticle.body?.replace(/<[^>]*>?/gm, "").slice(0, 120) + "...",
+          (firstArticle as Article & { summary?: string }).summary ||
+          `${firstArticle.body?.replace(/<[^>]*>?/gm, "").slice(0, 120)}...`,
         content: firstArticle.body,
         category: Array.isArray(firstArticle.contentType)
           ? firstArticle.contentType[0]
@@ -63,54 +60,7 @@ export default async function Home() {
             </span>
           </div>
 
-          {/* 記事一覧グリッド */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {articles.map((article) => {
-              // AI要約を優先取得し、タグを除去して綺麗にする
-              const cardSummary =
-                (article as any).summary ||
-                article.body?.replace(/<[^>]*>?/gm, "") ||
-                "";
-
-              return (
-                <a
-                  key={article.id}
-                  href={`/articles/${article.slug}`}
-                  className="group block bg-zinc-900/60 border border-zinc-800 rounded-xl overflow-hidden hover:border-zinc-700 transition-all duration-200"
-                >
-                  <div className="aspect-video w-full overflow-hidden bg-zinc-800 relative">
-                    <img
-                      src={
-                        article.eyecatch?.url
-                          ? `${article.eyecatch.url}?w=800&fm=webp&q=80`
-                          : "https://images.unsplash.com/photo-1546519638-68e109498ffc?w=800&auto=format&fit=crop&q=80"
-                      }
-                      alt={article.title}
-                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                    />
-                  </div>
-                  <div className="p-5">
-                    <div className="flex items-center gap-2 mb-3">
-                      <span className="text-[10px] font-mono font-semibold px-2 py-0.5 rounded bg-blue-500/10 text-blue-400 border border-blue-500/20 uppercase">
-                        {Array.isArray(article.contentType)
-                          ? article.contentType[0]
-                          : article.contentType || "TACTICS"}
-                      </span>
-                      <time className="text-xs text-zinc-400 font-mono">
-                        {new Date(article.publishedAt).toLocaleDateString("ja-JP")}
-                      </time>
-                    </div>
-                    <h3 className="text-base font-bold text-zinc-100 group-hover:text-blue-400 transition-colors line-clamp-2">
-                      {article.title}
-                    </h3>
-                    <p className="mt-2 text-xs text-zinc-400 line-clamp-3 leading-relaxed">
-                      {cardSummary}
-                    </p>
-                  </div>
-                </a>
-              );
-            })}
-          </div>
+          <LoadMoreArticles articles={articles} />
         </section>
       </main>
 

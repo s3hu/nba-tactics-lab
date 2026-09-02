@@ -27,15 +27,13 @@ export default async function CategoryPage({ params }: Props) {
   }
 
   // microCMSから該当カテゴリーの記事一覧を取得
-  const data = await client.getList<Article>({
+  const articles = await client.getAllContents<Article>({
     endpoint: "articles",
     queries: {
-      filters: `contentType[contains]${currentCategory.label}`,
+      filters: `contentType[contains]${currentCategory.cmsValue || currentCategory.id.toUpperCase()}`,
       orders: "-publishedAt",
     },
   });
-
-  const articles = data.contents;
 
   return (
     <div className="min-h-screen bg-[#0d0f12] text-white flex flex-col font-sans">
@@ -70,7 +68,7 @@ export default async function CategoryPage({ params }: Props) {
 
         {/* カテゴリー切り替えタブ */}
         <div className="mb-8">
-          <CategoryTabs categories={CATEGORIES} />
+          <CategoryTabs categories={CATEGORIES} activeCategoryId={currentCategory.id} />
         </div>
 
         {/* 記事一覧 */}

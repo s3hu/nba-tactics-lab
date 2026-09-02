@@ -15,11 +15,9 @@ type CategoryTabsProps = {
  */
 export function CategoryTabs({ categories, activeCategoryId, currentQuery }: CategoryTabsProps) {
   function buildHref(categoryId?: string) {
-    const params = new URLSearchParams();
-    if (categoryId) params.set("category", categoryId);
-    if (currentQuery) params.set("q", currentQuery);
-    const qs = params.toString();
-    return qs ? `/?${qs}` : "/";
+    if (!categoryId) return currentQuery ? `/?q=${encodeURIComponent(currentQuery)}` : "/";
+    const category = categories.find((item) => item.id === categoryId);
+    return `/categories/${category?.slug || categoryId}`;
   }
 
   return (
