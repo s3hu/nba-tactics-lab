@@ -135,7 +135,7 @@ class ArticleHTMLInspector(HTMLParser):
         if tag == "a":
             href = attr_map.get("href", "")
             self.links.append(href)
-            if not href.startswith("https://"):
+            if not href.startswith("https://") and not href.startswith("/articles/"):
                 self.errors.append("外部リンクはHTTPS URLで指定してください")
         if tag not in VOID_TAGS:
             self.stack.append(tag)

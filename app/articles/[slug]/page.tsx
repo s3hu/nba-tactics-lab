@@ -176,6 +176,18 @@ export default async function ArticleDetailPage({ params }: Props) {
           padding: 2px 6px !important;
           border-radius: 4px !important;
         }
+        .article-content a {
+          color: #60a5fa !important;
+          font-weight: 600 !important;
+          text-decoration: underline !important;
+          text-decoration-color: rgba(96, 165, 250, 0.55) !important;
+          text-underline-offset: 3px !important;
+          transition: color 0.2s ease, text-decoration-color 0.2s ease !important;
+        }
+        .article-content a:hover {
+          color: #93c5fd !important;
+          text-decoration-color: #93c5fd !important;
+        }
         .article-content ul {
           margin: 1.5rem 0 !important;
           padding-left: 1.5rem !important;

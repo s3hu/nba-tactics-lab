@@ -1,0 +1,33 @@
+{
+  "title": "ダスティ・メイ新体制のダラス｜ミシガン全米制覇の戦術はどう変えるか",
+  "slug": "dallas-mavericks-dusty-may-system",
+  "contentType": ["TEAM"],
+  "summary": "ダラス・マーベリックスは、ミシガンを全米王者へ導いたダスティ・メイを新HCに招聘した。\nメイの攻撃は広いスペーシングとボールスクリーンを起点に、選手が守備の反応を読んで次の優位へつなぐ。\n大学で築いた攻守の原則を解剖し、カイリー・アービングとクーパー・フラッグ中心の新生ダラスを展望する。",
+  "seoTitle": "ダスティ・メイの戦術とは？ミシガンから新生ダラスへの移植を分析",
+  "bodyFile": "content-drafts/dallas-mavericks-dusty-may-system.html",
+  "endpoint": "articles",
+  "eyecatchAssetPath": "content-drafts/dallas-mavericks-dusty-may-eyecatch.png",
+  "eyecatch": {"url": "https://images.microcms-assets.io/assets/6bd4a8bf852c466484e906dddca09703/56ab261a7c3c4103a8dc579656be2e70/exec-3091bd08-8dee-494c-8da2-4b51cc8a4c89.png"},
+  "board": {"mode": "generated", "promptsFile": "content-drafts/dallas-mavericks-dusty-may-board-prompts.md", "imageUrls": ["https://images.microcms-assets.io/assets/6bd4a8bf852c466484e906dddca09703/23e5d4f8af4640b692174f7186007325/download.png", "https://images.microcms-assets.io/assets/6bd4a8bf852c466484e906dddca09703/44feeae247804a17a02a1acbf2aecd82/download.png", "https://images.microcms-assets.io/assets/6bd4a8bf852c466484e906dddca09703/2bf5cec241af4546adc1fd00547ba060/download.png"], "imagePaths": ["content-drafts/tactics-boards/dallas-dusty-may-1-pnr-weakside-tag.png", "content-drafts/tactics-boards/dallas-dusty-may-2-dho-short-roll.png", "content-drafts/tactics-boards/dallas-dusty-may-3-flagg-hub.png"], "status": "uploaded"},
+  "fields": {"sourceUrls": true},
+  "quality": {
+    "minimumBodyChars": 5500,
+    "minimumVideos": 3,
+    "minimumImages": 0,
+    "requiredSections": ["第1章", "第2章", "第3章", "第4章", "第5章", "まとめ"],
+    "requiredTerms": ["ダスティ・メイ", "ダラス・マーベリックス", "ミシガン", "ピック＆ロール", "スペーシング", "ボールスクリーン", "DHO", "ショートロール", "ドロップディフェンス", "スイッチ"],
+    "namedExamples": ["ダスティ・メイ", "カイリー・アービング", "クーパー・フラッグ", "ウラド・ゴールディン", "ダニー・ウルフ", "エリック・スポールストラ", "ニコラ・ヨキッチ"],
+    "minimumNamedExamples": 5
+  },
+  "sourceUrls": [
+    "https://www.nba.com/mavs/news/dallas-mavericks-name-dusty-may-head-coach",
+    "https://www.nba.com/mavs/news/dusty-may-checked-all-the-important-boxes-mavs-were-searching-for-in-a-head-coach",
+    "https://www.nba.com/mavs/news/may-starts-mavericks-quest-knowing-he-has-help-starting-with-kyrie",
+    "https://mgoblue.com/documents/download/2025/11/25/20251125-bkm-notes-auburn.pdf",
+    "https://www.youtube.com/watch?v=OfACeLA-s8M",
+    "https://www.youtube.com/watch?v=ZQ-eWAz4RlM",
+    "https://www.youtube.com/watch?v=aWub2fuhQj4",
+    "https://www.youtube.com/watch?v=KH2ZC1Yw-28"
+  ],
+  "status": "draft"
+}
