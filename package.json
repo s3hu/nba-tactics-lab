@@ -10,6 +10,7 @@
   },
   "dependencies": {
     "@google/generative-ai": "^0.24.1",
+    "@vercel/analytics": "^2.0.1",
     "html-react-parser": "^6.1.7",
     "lucide-react": "^1.33.0",
     "microcms-js-sdk": "^3.4.0",
